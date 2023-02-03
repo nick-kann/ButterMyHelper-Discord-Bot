@@ -100,6 +100,8 @@ async def emojify_message(msg):
     if msg.content == '!emojify help':
         await msg.channel.send('Use `!emojify` to automatically emojify the last sent message'
                                'Use `!emojify add pos/neg/neu` to add positive, negative, or neutral emojis.')
+        return
+    # searches for last message (excluding the command use message)
     messages = [message async for message in msg.channel.history(limit=2)]
     message = messages[1]
     if msg.content.startswith('!emojify add '):
@@ -115,6 +117,7 @@ async def emojify_message(msg):
         await msg.channel.send('Invalid usage of the `!emojify add` command.\n'
                                'Command must be followed with `pos` for positive emojis, `neg` for negative emojis, or '
                                '`neu` for neutral emojis.')
+    # automatically replaces text in the last sent message with emojis
     if msg.content == '!emojify':
         await msg.channel.send(emo.emojify(message.content))
         return
