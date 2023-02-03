@@ -11,3 +11,4 @@ Discord bot created for my friend's discord server using python- which provides 
 - Rotate images sent by users
 - Keep track of debt by storing debts in a database, where details of the debt can be stored
 - Set up reminders that allow the bot to send a notification to the user when the designated reminder time is reached
+- Automatically emojify messages
