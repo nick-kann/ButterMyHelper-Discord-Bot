@@ -4,7 +4,7 @@ To run ButterMyHelper Bot, you will need to have Python 3 and pip installed on y
 ## Install dependencies
 pip install -r requirements.txt
 
-### ButterMyHelper bot
+# ButterMyHelper bot
 Discord bot created for my friend's discord server using python- which provides several useful tools and interactions. It allows users to: 
 - Play 8 ball
 - Flip a coin
