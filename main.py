@@ -9,9 +9,11 @@ import asyncio
 from PIL import Image
 from io import BytesIO
 import requests
+from emoji_translate.emoji_translate import Translator
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 scheduler = AsyncIOScheduler()
+emo = Translator(exact_match_only=False, randomize=True)
 
 # creates new instance of discord client with the ability to read and respond to messages
 intents = discord.Intents.default()
@@ -53,8 +55,12 @@ async def on_message(message):
                                    'Use `!remindme help` to see the reminder commands to get pinged at chosen times\n'
                                    'Use `!rotate degrees` where degrees is some integer; this will rotate the last'
                                    ' sent image by the specified degrees\n'
+                                   'Use `!emojify` to automatically emojify the last sent message\n'
                                    'Use `!flip` to flip a coin\n'
                                    'Use `!8ball question` to ask an 8ball a yes/no question\n')
+
+    elif message.content == '!emojify':
+        await emojify_message(message)
 
     elif message.content.startswith('!8ball '):
         await _8ball_answer(message)
@@ -63,7 +69,7 @@ async def on_message(message):
         await message.channel.send(random.choice(['Heads!', 'Tails!']))
 
     elif message.content.startswith('!rotate'):
-        await flip_image(message)
+        await rotate_image(message)
 
     elif message.content == '!remindme help':
         await remind_help(message)
@@ -88,8 +94,15 @@ async def on_message(message):
         await message.channel.send('Unrecognized command :pensive:')
 
 
+# translates text to emojis
+async def emojify_message(msg):
+    messages = [message async for message in msg.channel.history(limit=2)]
+    message = messages[1]
+    await msg.channel.send(emo.emojify(message.content))
+
+
 # flips the last sent image by a certain amount of degrees
-async def flip_image(msg):
+async def rotate_image(msg):
     match = re.match(r"^!rotate\s(\d+)$", msg.content)
     if not match:
         await msg.channel.send('Invalid use of the `!rotate` command. Use `!help` to see the proper usage.')
@@ -283,6 +296,9 @@ async def add_user(msg):
 
 # sequence of messages sent before shutdown
 async def shutdown_sequence(msg):
+    if msg.content == '!shutdown':
+        await msg.channel.send('No Admin ID provided :troll:')
+        return
     if int(msg.content[10:]) == admin_id:
         await msg.channel.send('W-w-w-what? :worried:')
         await asyncio.sleep(2)

@@ -3,3 +3,6 @@ aiosqlite
 apscheduler
 pillow
 requests
+spacy
+emoji-translate
+regex
