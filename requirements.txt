@@ -1,0 +1,5 @@
+discord
+aiosqlite
+apscheduler
+pillow
+requests
