@@ -55,11 +55,12 @@ async def on_message(message):
                                    'Use `!remindme help` to see the reminder commands to get pinged at chosen times\n'
                                    'Use `!rotate degrees` where degrees is some integer; this will rotate the last'
                                    ' sent image by the specified degrees\n'
-                                   'Use `!emojify` to automatically emojify the last sent message\n'
+                                   'Use `!emojify help` to see the emojify commands that replace/add emojis to the last'
+                                   ' sent message\n'
                                    'Use `!flip` to flip a coin\n'
                                    'Use `!8ball question` to ask an 8ball a yes/no question\n')
 
-    elif message.content == '!emojify':
+    elif message.content.startswith('!emojify'):
         await emojify_message(message)
 
     elif message.content.startswith('!8ball '):
@@ -96,9 +97,29 @@ async def on_message(message):
 
 # translates text to emojis
 async def emojify_message(msg):
+    if msg.content == '!emojify help':
+        await msg.channel.send('Use `!emojify` to automatically emojify the last sent message'
+                               'Use `!emojify add pos/neg/neu` to add positive, negative, or neutral emojis.')
     messages = [message async for message in msg.channel.history(limit=2)]
     message = messages[1]
-    await msg.channel.send(emo.emojify(message.content))
+    if msg.content.startswith('!emojify add '):
+        if msg.content == '!emojify add pos':
+            await msg.channel.send(emo.add_positive_emojis(message.content, num=1))
+            return
+        elif msg.content == '!emojify add neg':
+            await msg.channel.send(emo.add_negative_emojis(message.content, num=2))
+            return
+        elif msg.content == '!emojify add neu':
+            await msg.channel.send(emo.add_neutral_emojis(message.content, num=3))
+            return
+        await msg.channel.send('Invalid usage of the `!emojify add` command.\n'
+                               'Command must be followed with `pos` for positive emojis, `neg` for negative emojis, or '
+                               '`neu` for neutral emojis.')
+    if msg.content == '!emojify':
+        await msg.channel.send(emo.emojify(message.content))
+        return
+    await msg.channel.send('Invalid usage of the `!emojify` command. '
+                           'Use `!emojify help` to see the list of available commands')
 
 
 # flips the last sent image by a certain amount of degrees
