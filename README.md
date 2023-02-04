@@ -16,13 +16,13 @@ Discord bot created for my friend's discord server using python- which provides 
 
 ## Example usages
 ### Rotate images
-![!rotate](https://giphy.com/gifs/1nCpnzIlme3LEt3jjM)
+![!rotate](https://media.giphy.com/media/1nCpnzIlme3LEt3jjM/giphy.gif)
 
-### Set reminders
-![!remindme](https://giphy.com/gifs/KXOTY179hjm0u1dQS1)
+### Set up reminders
+![!remindme](https://media.giphy.com/media/KXOTY179hjm0u1dQS1/giphy.gif)
 
 ### Emojify messages
-![!emojify](https://giphy.com/gifs/6YhVYhWwaKznoRSt5b)
+![!emojify](https://media.giphy.com/media/6YhVYhWwaKznoRSt5b/giphy.gif)
 
 ## Author
 Nicholas Kann / [@Butter-My-Toast](https://github.com/Butter-My-Toast "Butter-My-Toast's github page")
