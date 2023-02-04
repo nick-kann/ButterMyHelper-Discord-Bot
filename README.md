@@ -15,13 +15,13 @@ Discord bot created for my friend's discord server using python- which provides 
 - Automatically emojify messages using NLP sentinment analysis provided by [emoji-translate](https://github.com/fabriceyhc/emoji_translate "Emoji translation for Python")
 
 ## Example usages
-### Rotate images
+##### Rotate images
 ![!rotate](https://media.giphy.com/media/1nCpnzIlme3LEt3jjM/giphy.gif)
 
-### Set up reminders
+##### Set up reminders
 ![!remindme](https://media.giphy.com/media/KXOTY179hjm0u1dQS1/giphy.gif)
 
-### Emojify messages
+##### Emojify messages
 ![!emojify](https://media.giphy.com/media/6YhVYhWwaKznoRSt5b/giphy.gif)
 
 ## Author
