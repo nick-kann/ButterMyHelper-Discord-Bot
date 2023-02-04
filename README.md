@@ -1,5 +1,5 @@
 ## Requirements
-To run/host ButterMyHelper Bot, you will need to have Python 3 and pip installed on your system.
+To run/host the ButterMyHelper Bot, you will need to have Python 3 and pip installed on your system. \
 If you just want to use the bot in your server, [invite the bot to your server](https://discord.com/api/oauth2/authorize?client_id=494299064951898122&permissions=543313886272&scope=bot "Invite ButterMyHelper to your server").
 
 ## Install dependencies
