@@ -6,7 +6,7 @@ If you just want to use the bot in your server, [invite the bot to your server](
 `pip install -r requirements.txt`
 
 # ButterMyHelper bot
-An intuitive and feature-rich Discord bot built using the Discord API and Python, designed to enhance user experience with a variety of useful tools and interactions. It allows users to: 
+An intuitive and feature-rich Discord bot built using the Discord API and Python, designed to enhance user experience with a variety of useful tools and interactions. \ It allows users to: 
 - Play 8 ball
 - Flip a coin
 - Rotate images sent by users
