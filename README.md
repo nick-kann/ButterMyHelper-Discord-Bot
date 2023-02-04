@@ -12,8 +12,8 @@ It allows users to:
 - Play 8 ball
 - Flip a coin
 - Rotate images sent by users
-- Keep track of debt by storing debts in a database, where details of the debt can be stored
-- Set up reminders that allow the bot to send a notification to the user when the designated reminder time is reached
+- Manage debt by storing the details in a database
+- Set reminders to receive notifications at designated times
 - Automatically emojify messages using NLP sentiment analysis
 
 ## Example usages
