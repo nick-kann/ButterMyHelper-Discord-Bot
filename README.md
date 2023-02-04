@@ -6,13 +6,13 @@ If you just want to use the bot in your server, [invite the bot to your server](
 `pip install -r requirements.txt`
 
 # ButterMyHelper bot
-Discord bot created for my friend's discord server using python- which provides several useful tools and interactions. It allows users to: 
+An intuitive and feature-rich Discord bot built using the Discord API and Python, designed to enhance user experience with a variety of useful tools and interactions. It allows users to: 
 - Play 8 ball
 - Flip a coin
 - Rotate images sent by users
 - Keep track of debt by storing debts in a database, where details of the debt can be stored
 - Set up reminders that allow the bot to send a notification to the user when the designated reminder time is reached
-- Automatically emojify messages using NLP sentiment analysis provided by [emoji-translate](https://github.com/fabriceyhc/emoji_translate "Emoji translation for Python")
+- Automatically emojify messages using NLP sentiment analysis
 
 ## Example usages
 ##### Rotate images
@@ -26,3 +26,12 @@ Discord bot created for my friend's discord server using python- which provides 
 
 ## Author
 Nicholas Kann / [@Butter-My-Toast](https://github.com/Butter-My-Toast "Butter-My-Toast's github page")
+
+## Licenses
+#### This project uses the following libraries:
+- [apscheduler](https://github.com/agronholm/apscheduler) (MIT License) - [License](https://github.com/agronholm/apscheduler/blob/master/LICENSE.txt)
+- [Pillow](https://github.com/python-pillow/Pillow) (HPND License) - [License](https://github.com/python-pillow/Pillow/blob/main/LICENSE)
+- [spaCy](https://github.com/explosion/spaCy) (MIT License) - [License](https://github.com/explosion/spaCy/blob/master/LICENSE)
+- [requests](https://github.com/psf/requests) (Apache-2.0 License) - [License](https://github.com/psf/requests/blob/main/LICENSE)
+- [aiosqlite](https://github.com/omnilib/aiosqlite) (MIT License) - [License](https://github.com/omnilib/aiosqlite/blob/main/LICENSE)
+- [emoji-translate](https://github.com/emoji-translate/emoji-translate) (MIT License) - [License](https://github.com/emoji-translate/emoji-translate/blob/master/LICENSE)
