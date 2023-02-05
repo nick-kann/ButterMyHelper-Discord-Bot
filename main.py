@@ -63,7 +63,7 @@ async def on_message(message):
     elif message.content.startswith('!emojify'):
         await emojify_message(message)
 
-    elif message.content.startswith('!8ball '):
+    elif message.content.startswith('!8ball'):
         await _8ball_answer(message)
 
     elif message.content == '!flip':
@@ -154,6 +154,9 @@ async def rotate_image(msg):
 
 # responds with random 8ball answer
 async def _8ball_answer(msg):
+    if msg.content == '!8ball':
+        await msg.channel.send('Missing question!')
+        return
     question = msg.content[6:]
     answers = ["It is certain.",
                "It is decidedly so.",
@@ -175,7 +178,7 @@ async def _8ball_answer(msg):
                "My sources say no.",
                "Outlook not so good.",
                "Very doubtful."]
-    await msg.channel.send(f'Question: {question}\nAnswer: :8ball:{random.choice(answers):8ball:}')
+    await msg.channel.send(f'Question: {question}\nAnswer: :8ball:{random.choice(answers)}:8ball:')
 
 
 # manages debt information
