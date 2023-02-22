@@ -58,7 +58,8 @@ async def on_message(message):
                                    'Use `!emojify help` to see the emojify commands that replace/add emojis to the last'
                                    ' sent message\n'
                                    'Use `!flip` to flip a coin\n'
-                                   'Use `!8ball question` to ask an 8ball a yes/no question\n')
+                                   'Use `!8ball question` to ask an 8ball a yes/no question\n'
+                                   'Use `!roll` to roll a dice\n')
 
     elif message.content.startswith('!emojify'):
         await emojify_message(message)
@@ -91,8 +92,17 @@ async def on_message(message):
         await add_user(message)
         await debt_command(message)
 
+    elif message.content == '!roll':
+        await roll_dice(message)
+
     elif message.content.startswith('!'):
         await message.channel.send('Unrecognized command :pensive:')
+
+
+# rolls a dice
+async def roll_dice(msg):
+    n = random.randint(1, 6)
+    await msg.channel.send('You rolled a ' + str(n) + "!")
 
 
 # translates text to emojis
