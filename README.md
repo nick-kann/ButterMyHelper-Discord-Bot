@@ -11,6 +11,7 @@ An intuitive and feature-rich Discord bot built using the Discord API and Python
 It allows users to: 
 - Play 8 ball
 - Flip a coin
+- Roll a dice
 - Rotate images sent by users
 - Manage debt by storing the details in a database
 - Set reminders to receive notifications at designated times
