@@ -3,7 +3,9 @@ To run/host the ButterMyHelper Bot, you will need to have Python 3 and pip insta
 If you just want to use the bot in your server, [invite the bot to your server](https://discord.com/api/oauth2/authorize?client_id=494299064951898122&permissions=543313886272&scope=bot "Invite ButterMyHelper to your server").
 
 ## Install dependencies
-`pip install -r requirements.txt`
+```
+pip install -r requirements.txt
+```
 
 # ButterMyHelper bot
 An intuitive and feature-rich Discord bot built using the Discord API and Python, designed to enhance user experience with a variety of useful tools and interactions.
