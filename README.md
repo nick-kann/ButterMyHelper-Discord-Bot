@@ -28,7 +28,7 @@ It allows users to:
 ![!emojify](https://media.giphy.com/media/6YhVYhWwaKznoRSt5b/giphy.gif)
 
 ## Author
-Nicholas Kann / [@butter-my-toast](https://github.com/Butter-My-Toast "Butter-My-Toast's github page")
+Nicholas Kann / [@butter-my-toast](https://github.com/butter-my-Toast "butter-my-toast's github page")
 
 ## Licenses
 #### This project uses the following libraries:
