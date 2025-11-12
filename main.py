@@ -1,6 +1,6 @@
 import os
 import discord
-import aiosqlite
+import asyncpg
 import re
 import datetime
 import json
@@ -21,27 +21,80 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 
 admin_id = 00000000
+db_pool = None
+
+
+# database helpers
+async def init_db():
+    global db_pool
+    db_pool = await asyncpg.create_pool(
+        user=os.environ["PG_USER"],
+        password=os.environ["PG_PASSWORD"],
+        database=os.environ["PG_DB"],
+        host=os.environ.get("PG_HOST", "127.0.0.1"),
+        port=int(os.environ.get("PG_PORT", "5432")),
+        min_size=1,
+        max_size=5,
+    )
+    async with db_pool.acquire() as conn:
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id BIGINT NOT NULL,
+                guild BIGINT NOT NULL,
+                debt JSONB DEFAULT '[]'::jsonb,
+                PRIMARY KEY (id, guild)
+            )
+            """
+        )
+
+
+async def db_get_debt(user_id: int, guild_id: int):
+    async with db_pool.acquire() as conn:
+        debt = await conn.fetchval(
+            "SELECT debt FROM users WHERE id=$1 AND guild=$2",
+            user_id, guild_id
+        )
+    if debt is None:
+        return []
+    if isinstance(debt, str):
+        return json.loads(debt)
+    return debt
+
+
+async def db_set_debt(user_id: int, guild_id: int, debt_list):
+    async with db_pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE users SET debt=$3 WHERE id=$1 AND guild=$2",
+            user_id, guild_id, json.dumps(debt_list)
+        )
+
+
+async def db_add_user(user_id: int, guild_id: int):
+    async with db_pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO users (id, guild)
+            VALUES ($1, $2)
+            ON CONFLICT (id, guild) DO NOTHING
+            """,
+            user_id, guild_id
+        )
 
 
 # creates the "users" table with the necessary columns if it's not already made
 @client.event
 async def on_ready():
-    print('Successfully logged in as {0.user}'
-          .format(client))
-    # sends randomly generated admin ID to bot admins, giving them access to !shutdown
+    print('Successfully logged in as {0.user}'.format(client))
     global admin_id
     admin_id = random.randint(10000000, 99999999)
     user = await client.fetch_user(494283724373098529)
     user1 = await client.fetch_user(422186156806111232)
     await user.send('Your admin ID: ' + str(admin_id))
     await user1.send('Your admin ID: ' + str(admin_id))
-    # sets bot status to invisible
     await client.change_presence(status=discord.Status.offline)
-    # starts apscheduler
     scheduler.start()
-    async with aiosqlite.connect("main.db") as db:
-        await db.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER , guild INTEGER, debt STRING DEFAULT "[]")')
-        await db.commit()
+    await init_db()
 
 
 # bot commands
@@ -111,7 +164,6 @@ async def emojify_message(msg):
         await msg.channel.send('Use `!emojify` to automatically emojify the last sent message'
                                'Use `!emojify add pos/neg/neu` to add positive, negative, or neutral emojis.')
         return
-    # searches for last message (excluding the command use message)
     messages = [message async for message in msg.channel.history(limit=2)]
     message = messages[1]
     if msg.content.startswith('!emojify add '):
@@ -127,7 +179,6 @@ async def emojify_message(msg):
         await msg.channel.send('Invalid usage of the `!emojify add` command.\n'
                                'Command must be followed with `pos` for positive emojis, `neg` for negative emojis, or '
                                '`neu` for neutral emojis.')
-    # automatically replaces text in the last sent message with emojis
     if msg.content == '!emojify':
         await msg.channel.send(emo.emojify(message.content))
         return
@@ -141,16 +192,11 @@ async def rotate_image(msg):
     if not match:
         await msg.channel.send('Invalid use of the `!rotate` command. Use `!help` to see the proper usage.')
         return
-
-    # creates a list of the last 20 messages
     messages = [message async for message in msg.channel.history(limit=20)]
-
     for message in messages[::-1]:
         if message.attachments:
-            # get the first attachment (image) from the message
             image = message.attachments[0]
             if image.url.endswith(('.jpg', '.jpeg', '.png', '.gif')):
-                # processes, edits, and saves the image to send
                 response = requests.get(image.url)
                 img = Image.open(BytesIO(response.content))
                 rotated_img = img.rotate(int(match.group(1)), expand=True)
@@ -202,61 +248,50 @@ async def debt_command(msg):
         return
 
     match = re.match(r"!debt remove ([0-9]{4})", msg.content)
-    # checks if the message is requesting to check or remove a current debt
     if msg.content == '!debt check' or match:
-        async with aiosqlite.connect("main.db") as db:
-            async with db.cursor() as cursor:
-                await cursor.execute('SELECT debt FROM users WHERE id = ? AND guild = ?',
-                                     (msg.author.id, msg.guild.id,))
-                data = await cursor.fetchone()
-                debt_list = json.loads(data[0])
-                # if message requested to remove a debt, it finds the matching debt ID and removes it
-                if match:
-                    request_id = int(match.group(1))
-                    for spef_debt in debt_list:
-                        if spef_debt[len(spef_debt) - 1] == request_id:
-                            debt_list.remove(spef_debt)
-                            await cursor.execute('UPDATE users SET debt = ? WHERE id = ? AND guild = ?',
-                                                 (json.dumps(debt_list), msg.author.id, msg.guild.id,))
-                            await msg.channel.send('Debt removed!')
-                            await db.commit()
-                            return
-                    await msg.channel.send('No matching Debt ID found.')
-                    return
+        debt_list = await db_get_debt(msg.author.id, msg.guild.id)
+        if match:
+            request_id = int(match.group(1))
+            found = False
+            for spef_debt in list(debt_list):
+                if spef_debt[len(spef_debt) - 1] == request_id:
+                    debt_list.remove(spef_debt)
+                    await db_set_debt(msg.author.id, msg.guild.id, debt_list)
+                    await msg.channel.send('Debt removed!')
+                    found = True
+                    break
+            if not found:
+                await msg.channel.send('No matching Debt ID found.')
+            return
 
-                # prints out the user's current debts in a format
-
-                debt_info = ':coin: **' + msg.author.name + '\'s debt list** :coin:\n\n**Needs:**\n'
-
-                for i in range(len(debt_list)):
-                    temp_debt = debt_list[i]
-                    if temp_debt[0] == 'receive':
-                        debt_info += '-$' + temp_debt[2] + ' from ' + temp_debt[1] + '\n'
-                        if len(temp_debt) == 6:
-                            debt_info += 'Context: ' + temp_debt[3] + '\n'
-                        date = await convert_standard_date(temp_debt[len(temp_debt) - 2])
-                        debt_info += 'Added to debt list at ' + date + '\n'
-                        debt_info += 'Debt ID: *' + str(temp_debt[len(temp_debt) - 1]) + '*\n\n'
-                if debt_info[len(debt_info) - 2] != '\n':
-                    debt_info += ':x:\n\n'
-                debt_info += '**Owes:**\n'
-                for i in range(len(debt_list)):
-                    temp_debt = debt_list[i]
-                    if temp_debt[0] == 'owe':
-                        debt_info += '-$' + temp_debt[2] + ' to ' + temp_debt[1] + '\n'
-                        if len(temp_debt) == 6:
-                            debt_info += 'Context: ' + temp_debt[3] + '\n'
-                        date = await convert_standard_date(temp_debt[len(temp_debt) - 2])
-                        debt_info += 'Added to debt list at ' + date + '\n'
-                        debt_info += 'Debt ID: *' + str(temp_debt[len(temp_debt) - 1]) + '*\n\n'
-                if debt_info[len(debt_info) - 2] != '\n':
-                    debt_info += ':x:\n'
-                await msg.channel.send(debt_info)
-                return
+        debt_info = ':coin: **' + msg.author.name + '\'s debt list** :coin:\n\n**Needs:**\n'
+        for i in range(len(debt_list)):
+            temp_debt = debt_list[i]
+            if temp_debt[0] == 'receive':
+                debt_info += '-$' + temp_debt[2] + ' from ' + temp_debt[1] + '\n'
+                if len(temp_debt) == 6:
+                    debt_info += 'Context: ' + temp_debt[3] + '\n'
+                date = await convert_standard_date(temp_debt[len(temp_debt) - 2])
+                debt_info += 'Added to debt list at ' + date + '\n'
+                debt_info += 'Debt ID: *' + str(temp_debt[len(temp_debt) - 1]) + '*\n\n'
+        if debt_info[len(debt_info) - 2] != '\n':
+            debt_info += ':x:\n\n'
+        debt_info += '**Owes:**\n'
+        for i in range(len(debt_list)):
+            temp_debt = debt_list[i]
+            if temp_debt[0] == 'owe':
+                debt_info += '-$' + temp_debt[2] + ' to ' + temp_debt[1] + '\n'
+                if len(temp_debt) == 6:
+                    debt_info += 'Context: ' + temp_debt[3] + '\n'
+                date = await convert_standard_date(temp_debt[len(temp_debt) - 2])
+                debt_info += 'Added to debt list at ' + date + '\n'
+                debt_info += 'Debt ID: *' + str(temp_debt[len(temp_debt) - 1]) + '*\n\n'
+        if debt_info[len(debt_info) - 2] != '\n':
+            debt_info += ':x:\n'
+        await msg.channel.send(debt_info)
+        return
 
     match = re.match(r"!debt (receive|owe) (\w+\s?\w+) ([0-9]+\.?[0-9]+)(.*)?", msg.content)
-
-    # creates a list that stores the details of the debt being added and adds that list to the database
     debt_request = []
     if match:
         a, b, c, d = match.group(1), match.group(2), match.group(3), match.group(4)
@@ -269,31 +304,21 @@ async def debt_command(msg):
         now = datetime.datetime.now(pst)
         date_str = now.strftime("%m/%d/%Y, %I:%M %p")
         debt_request.append(date_str)
-        async with aiosqlite.connect("main.db") as db:
-            async with db.cursor() as cursor:
-                await cursor.execute('SELECT debt FROM users WHERE id = ? AND guild = ?',
-                                     (msg.author.id, msg.guild.id,))
-                data = await cursor.fetchone()
-                if data:
-                    debt_list = json.loads(data[0])
-                    debt_request_id = random.randint(1000, 9999)
+
+        debt_list = await db_get_debt(msg.author.id, msg.guild.id)
+        debt_request_id = random.randint(1000, 9999)
+        identical_id = True
+        while identical_id:
+            identical_id = False
+            for spef_debt in debt_list:
+                if spef_debt[len(spef_debt) - 1] == debt_request_id:
                     identical_id = True
-                    while identical_id:
-                        identical_id = False
-                        for spef_debt in debt_list:
-                            if spef_debt[len(spef_debt) - 1] == debt_request_id:
-                                identical_id = True
-                                debt_request_id = random.randint(1000, 9999)
-                                break
-                    debt_request.append(debt_request_id)
-                    debt_list.append(debt_request)
-                    await cursor.execute('UPDATE users SET debt = ? WHERE id = ? AND guild = ?',
-                                         (json.dumps(debt_list), msg.author.id, msg.guild.id,))
-                    await db.commit()
-                    await msg.channel.send('Debt request added!')
-                else:
-                    await msg.channel.send('ID or Guild not found. '
-                                           'Contact ButterMyToast#6218 so he can fix it :scream_cat:')
+                    debt_request_id = random.randint(1000, 9999)
+                    break
+        debt_request.append(debt_request_id)
+        debt_list.append(debt_request)
+        await db_set_debt(msg.author.id, msg.guild.id, debt_list)
+        await msg.channel.send('Debt request added!')
     else:
         await msg.channel.send('Invalid usage of the `!debt` command. Use `!debt help`')
 
@@ -321,14 +346,7 @@ async def convert_standard_date(standard_date) -> str:
 
 # adds user to database if not already in the database
 async def add_user(msg):
-    async with aiosqlite.connect("main.db") as db:
-        async with db.cursor() as cursor:
-            await cursor.execute('SELECT id FROM users WHERE id = ? AND guild = ?', (msg.author.id, msg.guild.id,))
-            data = await cursor.fetchone()
-            if not data:
-                await cursor.execute('INSERT INTO users (id, guild) VALUES (?, ?)',
-                                     (msg.author.id, msg.guild.id,))
-        await db.commit()
+    await db_add_user(msg.author.id, msg.guild.id)
 
 
 # sequence of messages sent before shutdown
@@ -380,8 +398,6 @@ async def remind(msg):
         remind_time = datetime.datetime.strptime(time_string, '%I:%M %p %m/%d/%Y')
         await msg.channel.send(f'Reminder set for {remind_time.strftime("%I:%M %p %m/%d/%Y")}')
         remind_time += datetime.timedelta(hours=+8)
-
-        # schedule the reminder
         scheduler.add_job(remind_user, 'date', run_date=remind_time, args=[msg.author.id, reminder, msg.channel])
     except:
         await msg.channel.send('Invalid usage of the `!remindme` command. Use `!remindme help`')
