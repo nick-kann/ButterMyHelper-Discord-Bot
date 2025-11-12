@@ -1,8 +1,6 @@
-discord
-aiosqlite
-apscheduler
+discord.py
+asyncpg
+apScheduler
 pillow
 requests
-spacy
 emoji-translate
-regex
